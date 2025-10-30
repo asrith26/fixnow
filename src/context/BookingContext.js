@@ -209,6 +209,8 @@ export const BookingProvider = ({ children }) => {
           );
           setBookings(updatedBookings);
         }
+      } else {
+        console.error('Failed to cancel booking');
       }
     } catch (error) {
       console.error('Error cancelling booking:', error);
@@ -248,7 +250,11 @@ export const BookingProvider = ({ children }) => {
             booking._id === bookingId ? data.booking : booking
           );
           setBookings(updatedBookings);
+          return { success: true, booking: data.booking };
         }
+      } else {
+        console.error('Failed to update booking');
+        return { success: false, error: 'Failed to update booking' };
       }
     } catch (error) {
       console.error('Error updating booking:', error);
@@ -263,6 +269,7 @@ export const BookingProvider = ({ children }) => {
       if (currentUser?.id) {
         localStorage.setItem(`bookings_${currentUser.id}`, JSON.stringify(updatedBookings));
       }
+      return { success: true, booking: updatedBookings.find(b => b._id === bookingId) };
     } finally {
       setLoading(false);
     }
