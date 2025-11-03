@@ -20,6 +20,7 @@ const BookTime = () => {
       setAddress(localAddress);
       setCity(localCity);
       setZipCode(localZipCode);
+      console.log('BookTime: Setting time:', timeSlot, 'address:', localAddress, 'city:', localCity, 'zip:', localZipCode);
       navigate('/book-confirmation');
     }
   };

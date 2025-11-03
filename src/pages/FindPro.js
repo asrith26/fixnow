@@ -75,6 +75,7 @@ const FindPro = () => {
       setService(selectedService.name);
       setDate(selectedDate);
       setNotes(notes);
+      console.log('FindPro: Setting service:', selectedService.name, 'date:', selectedDate);
       navigate('/book-time');
     }
   };

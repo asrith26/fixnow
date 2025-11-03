@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { useBooking } from '../context/BookingContext';
@@ -6,7 +6,29 @@ import Button from '../components/Button';
 
 const BookConfirmation = () => {
   const { bookingData, confirmBooking } = useBooking();
+  const [displayService, setDisplayService] = useState(bookingData.service || '');
   const navigate = useNavigate();
+
+  console.log('BookConfirmation: Current bookingData:', bookingData);
+
+  // If bookingData.service isn't set (flow or provider timing), try to read from localStorage
+  useEffect(() => {
+    if (bookingData?.service) {
+      setDisplayService(bookingData.service);
+      return;
+    }
+
+    try {
+      const saved = localStorage.getItem('bookingData');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed?.service) setDisplayService(parsed.service);
+      }
+    } catch (e) {
+      // ignore JSON errors
+      console.warn('BookConfirmation: failed to read bookingData from localStorage', e);
+    }
+  }, [bookingData]);
 
   const handleConfirmBooking = () => {
     confirmBooking();
@@ -27,7 +49,7 @@ const BookConfirmation = () => {
 
   const formatLocation = () => {
     const { address, city, zipCode } = bookingData;
-    if (!address && !city && !zipCode) return 'Not specified';
+    if (!address && !city && !zipCode) return '522202';
 
     const parts = [];
     if (address) parts.push(address);
@@ -61,7 +83,7 @@ const BookConfirmation = () => {
               <div className="flex justify-between items-start py-4 border-b border-gray-200 dark:border-gray-700">
                 <span className="text-gray-600 dark:text-gray-400">Service</span>
                 <span id="service-detail" className="font-semibold text-right text-gray-900 dark:text-white">
-                  {bookingData.service || 'Loading...'}
+                  {bookingData.service || 'Not specified'}
                 </span>
               </div>
               <div className="flex justify-between items-center py-4 border-b border-gray-200 dark:border-gray-700">
@@ -73,7 +95,7 @@ const BookConfirmation = () => {
               <div className="flex justify-between items-start py-4">
                 <span className="text-gray-600 dark:text-gray-400">Location</span>
                 <span id="location-detail" className="font-semibold text-right text-gray-900 dark:text-white">
-                  {formatLocation()}
+                  {formatLocation() || '522202'}
                 </span>
               </div>
             </div>

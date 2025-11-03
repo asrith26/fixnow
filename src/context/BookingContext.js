@@ -13,27 +13,36 @@ export const useBooking = () => {
 
 export const BookingProvider = ({ children }) => {
   const { currentUser, getAuthHeaders } = useAuth();
-  const [bookingData, setBookingData] = useState({
-    service: '',
-    date: '',
-    time: '',
-    address: '',
-    city: '',
-    zipCode: '',
-    notes: ''
+  const [bookingData, setBookingData] = useState(() => {
+    // Load booking data from localStorage on initialization
+    const savedData = localStorage.getItem('bookingData');
+    if (savedData) {
+      const parsed = JSON.parse(savedData);
+      // Ensure all fields are present, defaulting to empty strings
+      return {
+        service: parsed.service || '',
+        date: parsed.date || '',
+        time: parsed.time || '',
+        address: parsed.address || '',
+        city: parsed.city || '',
+        zipCode: parsed.zipCode || '',
+        notes: parsed.notes || ''
+      };
+    }
+    return {
+      service: '',
+      date: '',
+      time: '',
+      address: '',
+      city: '',
+      zipCode: '',
+      notes: ''
+    };
   });
 
   const [currentStep, setCurrentStep] = useState(1);
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    // Load booking data from localStorage on mount
-    const savedData = localStorage.getItem('bookingData');
-    if (savedData) {
-      setBookingData(JSON.parse(savedData));
-    }
-  }, []);
 
   useEffect(() => {
     // Load user-specific bookings from backend when user changes
