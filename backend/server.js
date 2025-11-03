@@ -3,7 +3,16 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const path = require('path');
+
+// Routes
 const authRoutes = require('./routes/auth');
+const bookingRoutes = require('./routes/bookings');
+const paymentRoutes = require('./routes/payments');
+const professionalRoutes = require('./routes/professionals');
+const serviceRoutes = require('./routes/services');
+const reviewRoutes = require('./routes/reviews');
+const notificationRoutes = require('./routes/notifications');
+const adminRoutes = require('./routes/admin');
 
 dotenv.config();
 
@@ -12,6 +21,10 @@ const app = express();
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Serve static files from uploads directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Database connection
 mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/fixnow', {
@@ -19,18 +32,32 @@ mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/fixnow', {
   useUnifiedTopology: true,
 })
 .then(() => console.log('MongoDB connected'))
-.catch(err => console.log(err));
+.catch(err => console.log('MongoDB connection error:', err));
 
 // Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/bookings', require('./routes/bookings'));
-app.use('/api/payments', require('./routes/payments'));
+app.use('/api/bookings', bookingRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/professionals', professionalRoutes);
+app.use('/api/services', serviceRoutes);
+app.use('/api/reviews', reviewRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/admin', adminRoutes);
 
-// API-only server, no static file serving
+// Health check route
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'OK', timestamp: new Date().toISOString() });
+});
 
 // Default route
 app.get('/', (req, res) => {
   res.send('FixNow Backend API');
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ message: 'Something went wrong!', error: err.message });
 });
 
 const PORT = process.env.PORT || 5001;

@@ -28,15 +28,18 @@ export const AuthProvider = ({ children }) => {
   const signup = async (formData) => {
     try {
       const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5001';
-      const response = await fetch(`${apiUrl}/api/auth/signup`, {
+      const response = await fetch(`${apiUrl}/api/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          fullName: formData.fullName,
+          name: formData.name,
           email: formData.email,
           password: formData.password,
+          role: formData.role || 'user',
+          phone: formData.phone,
+          address: formData.address,
         }),
       });
 

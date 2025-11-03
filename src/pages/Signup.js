@@ -8,10 +8,12 @@ import Button from '../components/Button';
 
 const Signup = () => {
   const [formData, setFormData] = useState({
-    fullName: '',
+    name: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    phone: '',
+    address: ''
   });
   const [loading, setLoading] = useState(false);
 
@@ -75,9 +77,9 @@ const Signup = () => {
           <div className="space-y-4">
             <FormInput
               label="Full Name"
-              name="fullName"
+              name="name"
               type="text"
-              value={formData.fullName}
+              value={formData.name}
               onChange={handleChange}
               placeholder="John Doe"
               required
@@ -91,6 +93,24 @@ const Signup = () => {
               onChange={handleChange}
               placeholder="name@company.com"
               required
+            />
+
+            <FormInput
+              label="Phone"
+              name="phone"
+              type="tel"
+              value={formData.phone}
+              onChange={handleChange}
+              placeholder="+1 (555) 123-4567"
+            />
+
+            <FormInput
+              label="Address"
+              name="address"
+              type="text"
+              value={formData.address}
+              onChange={handleChange}
+              placeholder="123 Main St, City, State"
             />
 
             <FormInput

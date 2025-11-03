@@ -1,15 +1,18 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Upload, User, Briefcase, FileText, Calendar, CheckCircle, Eye, EyeOff } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { ArrowLeft, Upload, User, Briefcase, FileText, Calendar, CheckCircle, Eye, EyeOff, LogIn } from 'lucide-react';
 import Button from '../components/Button';
 import FormInput from '../components/FormInput';
 import toast from 'react-hot-toast';
 
 const ProfessionalApplication = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [showStatusForm, setShowStatusForm] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [isExistingWorker, setIsExistingWorker] = useState(false);
   const [formData, setFormData] = useState({
     // Personal Information
     fullName: '',
@@ -105,30 +108,25 @@ const ProfessionalApplication = () => {
     }
 
     try {
-      // Simulate API call to check application status
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Try to login with the provided credentials
+      const result = await login({
+        email: formData.professionalId, // Using email as professional ID
+        password: formData.statusPassword
+      });
 
-      // Mock status response
-      const mockStatus = {
-        status: 'approved', // Could be 'pending', 'approved', 'rejected'
-        submittedDate: '2024-01-15',
-        reviewedDate: '2024-01-18',
-        message: 'Your application has been approved! You can now start accepting jobs.',
-        nextSteps: 'Please proceed to your professional dashboard to set up your profile and start receiving job requests.'
-      };
-
-      setFormData(prev => ({
-        ...prev,
-        applicationStatus: mockStatus
-      }));
-      toast.success('Application status retrieved successfully!');
-
-      // Navigate to professional dashboard after successful status check
-      setTimeout(() => {
-        navigate('/professional-dashboard');
-      }, 2000);
+      if (result.success) {
+        // Check if user is a professional
+        if (result.user.role === 'professional') {
+          toast.success('Welcome back! Redirecting to your dashboard...');
+          navigate('/professional-dashboard');
+        } else {
+          toast.error('This account is not registered as a professional.');
+        }
+      } else {
+        toast.error(result.error || 'Invalid credentials. Please check your email and password.');
+      }
     } catch (error) {
-      toast.error('Failed to retrieve application status. Please try again.');
+      toast.error('Failed to login. Please try again.');
     }
   };
 
@@ -477,102 +475,65 @@ const ProfessionalApplication = () => {
   const renderApplicationStatus = () => (
     <section>
       <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 border-b pb-4">
-        Application Status
+        Professional Login
       </h2>
-      {!formData.applicationStatus ? (
-        <div className="space-y-6">
-          <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
-            <p className="text-blue-800 dark:text-blue-300">
-              Your application has been submitted successfully! Please check your status below.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+      <div className="space-y-6">
+        <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+          <p className="text-blue-800 dark:text-blue-300">
+            Already have a professional account? Sign in below to access your dashboard.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <FormInput
+            label="Email Address"
+            name="professionalId"
+            type="email"
+            value={formData.professionalId}
+            onChange={handleStatusInputChange}
+            error={errors.professionalId}
+            placeholder="Enter your email address"
+            required
+          />
+          <div className="relative">
             <FormInput
-              label="Professional ID"
-              name="professionalId"
-              type="text"
-              value={formData.professionalId}
+              label="Password"
+              name="statusPassword"
+              type={showPassword ? "text" : "password"}
+              value={formData.statusPassword}
               onChange={handleStatusInputChange}
-              error={errors.professionalId}
-              placeholder="Enter your Professional ID"
+              error={errors.statusPassword}
+              placeholder="Enter your password"
               required
             />
-            <div className="relative">
-              <FormInput
-                label="Password"
-                name="statusPassword"
-                type={showPassword ? "text" : "password"}
-                value={formData.statusPassword}
-                onChange={handleStatusInputChange}
-                error={errors.statusPassword}
-                placeholder="Enter your password"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-8 text-gray-400 hover:text-gray-600"
-              >
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
-            </div>
-          </div>
-          <div className="text-center">
-            <Button
-              onClick={checkApplicationStatus}
-              className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary/90"
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-8 text-gray-400 hover:text-gray-600"
             >
-              Check Application Status
-            </Button>
+              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
           </div>
         </div>
-      ) : (
-        <div className="space-y-6">
-          <div className="text-center">
-            <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full text-2xl mb-4 ${
-              formData.applicationStatus.status === 'approved'
-                ? 'text-green-600 bg-green-100 dark:bg-green-900/20'
-                : formData.applicationStatus.status === 'pending'
-                ? 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/20'
-                : 'text-red-600 bg-red-100 dark:bg-red-900/20'
-            }`}>
-              {formData.applicationStatus.status === 'approved' ? '✓' :
-               formData.applicationStatus.status === 'pending' ? '⏳' : '✗'}
-            </div>
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-              Application {formData.applicationStatus.status.charAt(0).toUpperCase() + formData.applicationStatus.status.slice(1)}
-            </h3>
-            <p className="text-gray-600 dark:text-gray-400 text-sm">
-              Submitted: {new Date(formData.applicationStatus.submittedDate).toLocaleDateString()}
-              {formData.applicationStatus.reviewedDate && (
-                <span> | Reviewed: {new Date(formData.applicationStatus.reviewedDate).toLocaleDateString()}</span>
-              )}
-            </p>
+        <div className="text-center space-y-4">
+          <Button
+            onClick={checkApplicationStatus}
+            className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary/90 flex items-center gap-2 justify-center"
+          >
+            <LogIn size={20} />
+            Sign In as Professional
+          </Button>
+          <div className="text-sm text-gray-600 dark:text-gray-400">
+            <p>Don't have an account yet?</p>
+            <button
+              type="button"
+              onClick={() => setIsExistingWorker(false)}
+              className="text-primary hover:text-primary/90 font-medium"
+            >
+              Apply to become a professional
+            </button>
           </div>
-
-          <div className="p-4 rounded-lg bg-gray-50 dark:bg-gray-700">
-            <p className="text-gray-700 dark:text-gray-300 mb-3">
-              {formData.applicationStatus.message}
-            </p>
-            {formData.applicationStatus.nextSteps && (
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                <strong>Next Steps:</strong> {formData.applicationStatus.nextSteps}
-              </p>
-            )}
-          </div>
-
-          {formData.applicationStatus.status === 'approved' && (
-            <div className="text-center">
-              <Button
-                onClick={() => navigate('/professional-dashboard')}
-                className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary/90"
-              >
-                Go to Professional Dashboard
-              </Button>
-            </div>
-          )}
         </div>
-      )}
+      </div>
     </section>
   );
 
@@ -602,7 +563,32 @@ const ProfessionalApplication = () => {
             </p>
           </div>
 
-          {!showStatusForm ? (
+          <div className="mb-8 text-center">
+            <div className="flex justify-center gap-4 mb-6">
+              <button
+                onClick={() => setIsExistingWorker(false)}
+                className={`px-6 py-3 rounded-lg font-medium transition-colors ${
+                  !isExistingWorker
+                    ? 'bg-primary text-white'
+                    : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                }`}
+              >
+                New Application
+              </button>
+              <button
+                onClick={() => setIsExistingWorker(true)}
+                className={`px-6 py-3 rounded-lg font-medium transition-colors ${
+                  isExistingWorker
+                    ? 'bg-primary text-white'
+                    : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                }`}
+              >
+                Existing Professional
+              </button>
+            </div>
+          </div>
+
+          {!isExistingWorker ? (
             <>
               {renderStepIndicator()}
 

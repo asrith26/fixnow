@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Upload, User, Briefcase, FileText, Calendar, CheckCircle } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { ArrowLeft, Upload, User, Briefcase, FileText, Calendar, CheckCircle, LogIn } from 'lucide-react';
 import Button from '../components/Button';
 import FormInput from '../components/FormInput';
 import toast from 'react-hot-toast';
 
 const BecomePro = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
+  const [isExistingWorker, setIsExistingWorker] = useState(false);
   const [formData, setFormData] = useState({
     // Personal Information
     fullName: '',
@@ -97,32 +100,32 @@ const BecomePro = () => {
   const checkApplicationStatus = async () => {
     if (!formData.professionalId.trim() || !formData.statusPassword.trim()) {
       setErrors({
-        professionalId: !formData.professionalId.trim() ? 'Professional ID is required' : '',
+        professionalId: !formData.professionalId.trim() ? 'Email is required' : '',
         statusPassword: !formData.statusPassword.trim() ? 'Password is required' : ''
       });
       return;
     }
 
     try {
-      // Simulate API call to check application status
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Try to login with the provided credentials
+      const result = await login({
+        email: formData.professionalId, // Using email as professional ID
+        password: formData.statusPassword
+      });
 
-      // Mock status response
-      const mockStatus = {
-        status: 'approved', // Could be 'pending', 'approved', 'rejected'
-        submittedDate: '2024-01-15',
-        reviewedDate: '2024-01-18',
-        message: 'Your application has been approved! You can now start accepting jobs.',
-        nextSteps: 'Please proceed to your professional dashboard to set up your profile and start receiving job requests.'
-      };
-
-      setFormData(prev => ({
-        ...prev,
-        applicationStatus: mockStatus
-      }));
-      toast.success('Application status retrieved successfully!');
+      if (result.success) {
+        // Check if user is a professional
+        if (result.user.role === 'professional') {
+          toast.success('Welcome back! Redirecting to your dashboard...');
+          navigate('/professional-dashboard');
+        } else {
+          toast.error('This account is not registered as a professional.');
+        }
+      } else {
+        toast.error(result.error || 'Invalid credentials. Please check your email and password.');
+      }
     } catch (error) {
-      toast.error('Failed to retrieve application status. Please try again.');
+      toast.error('Failed to login. Please try again.');
     }
   };
 
@@ -478,85 +481,56 @@ const BecomePro = () => {
   const renderApplicationStatus = () => (
     <section>
       <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 border-b pb-4">
-        5. Application Status
+        Professional Login
       </h2>
-      {!formData.applicationStatus ? (
-        <div className="space-y-6">
-          <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
-            <p className="text-blue-800 dark:text-blue-300">
-              Your application has been submitted successfully! Please check your status below.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <FormInput
-              label="Professional ID"
-              name="professionalId"
-              type="text"
-              value={formData.professionalId}
-              onChange={handleStatusInputChange}
-              error={errors.professionalId}
-              placeholder="Enter your Professional ID"
-              required
-            />
-            <FormInput
-              label="Password"
-              name="statusPassword"
-              type="password"
-              value={formData.statusPassword}
-              onChange={handleStatusInputChange}
-              error={errors.statusPassword}
-              placeholder="Enter your password"
-              required
-            />
+      <div className="space-y-6">
+        <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+          <p className="text-blue-800 dark:text-blue-300">
+            Already have a professional account? Sign in below to access your dashboard.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <FormInput
+            label="Email Address"
+            name="professionalId"
+            type="email"
+            value={formData.professionalId}
+            onChange={handleStatusInputChange}
+            error={errors.professionalId}
+            placeholder="Enter your email address"
+            required
+          />
+          <FormInput
+            label="Password"
+            name="statusPassword"
+            type="password"
+            value={formData.statusPassword}
+            onChange={handleStatusInputChange}
+            error={errors.statusPassword}
+            placeholder="Enter your password"
+            required
+          />
+        </div>
+        <div className="text-center space-y-4">
+          <Button
+            onClick={checkApplicationStatus}
+            className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary/90 flex items-center gap-2 justify-center"
+          >
+            <LogIn size={20} />
+            Sign In as Professional
+          </Button>
+          <div className="text-sm text-gray-600 dark:text-gray-400">
+            <p>Don't have an account yet?</p>
+            <button
+              type="button"
+              onClick={() => setIsExistingWorker(false)}
+              className="text-primary hover:text-primary/90 font-medium"
+            >
+              Apply to become a professional
+            </button>
           </div>
         </div>
-      ) : (
-        <div className="space-y-6">
-          <div className="text-center">
-            <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full text-2xl mb-4 ${
-              formData.applicationStatus.status === 'approved'
-                ? 'text-green-600 bg-green-100 dark:bg-green-900/20'
-                : formData.applicationStatus.status === 'pending'
-                ? 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/20'
-                : 'text-red-600 bg-red-100 dark:bg-red-900/20'
-            }`}>
-              {formData.applicationStatus.status === 'approved' ? '✓' :
-               formData.applicationStatus.status === 'pending' ? '⏳' : '✗'}
-            </div>
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-              Application {formData.applicationStatus.status.charAt(0).toUpperCase() + formData.applicationStatus.status.slice(1)}
-            </h3>
-            <p className="text-gray-600 dark:text-gray-400 text-sm">
-              Submitted: {new Date(formData.applicationStatus.submittedDate).toLocaleDateString()}
-              {formData.applicationStatus.reviewedDate && (
-                <span> | Reviewed: {new Date(formData.applicationStatus.reviewedDate).toLocaleDateString()}</span>
-              )}
-            </p>
-          </div>
-
-          <div className="p-4 rounded-lg bg-gray-50 dark:bg-gray-700">
-            <p className="text-gray-700 dark:text-gray-300 mb-3">
-              {formData.applicationStatus.message}
-            </p>
-            {formData.applicationStatus.nextSteps && (
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                <strong>Next Steps:</strong> {formData.applicationStatus.nextSteps}
-              </p>
-            )}
-          </div>
-
-          {formData.applicationStatus.status === 'approved' && (
-            <div className="text-center">
-              <Button
-                onClick={() => navigate('/professional-dashboard')}
-                className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary/90"
-              >
-                Go to Professional Dashboard
-              </Button>
-            </div>
-          )}
-        </div>
-      )}
+      </div>
     </section>
   );
 
@@ -577,7 +551,29 @@ const BecomePro = () => {
 
       <main className="flex-1 px-4 py-12 sm:px-6 md:px-10 lg:px-20 xl:px-40">
         <div className="mx-auto max-w-5xl">
-          <div className="mb-12 text-center">
+          <div className="mb-8 text-center">
+            <div className="flex justify-center gap-4 mb-6">
+              <button
+                onClick={() => setIsExistingWorker(false)}
+                className={`px-6 py-3 rounded-lg font-medium transition-colors ${
+                  !isExistingWorker
+                    ? 'bg-primary text-white'
+                    : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                }`}
+              >
+                New Application
+              </button>
+              <button
+                onClick={() => setIsExistingWorker(true)}
+                className={`px-6 py-3 rounded-lg font-medium transition-colors ${
+                  isExistingWorker
+                    ? 'bg-primary text-white'
+                    : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                }`}
+              >
+                Existing Professional
+              </button>
+            </div>
             <h1 className="text-4xl font-bold tracking-tighter text-gray-900 dark:text-white sm:text-5xl">
               Join Our Team of Professionals
             </h1>
@@ -586,62 +582,62 @@ const BecomePro = () => {
             </p>
           </div>
 
-          {renderStepIndicator()}
+          {!isExistingWorker ? (
+            <>
+              {renderStepIndicator()}
 
-          <div className="rounded-xl bg-white dark:bg-gray-800 shadow-lg p-8">
-            <form onSubmit={handleSubmit} className="space-y-8">
-              {currentStep === 1 && renderPersonalInfo()}
-              {currentStep === 2 && renderProfessionalDetails()}
-              {currentStep === 3 && renderDocumentation()}
-              {currentStep === 4 && renderAvailability()}
-              {currentStep === 5 && renderApplicationStatus()}
+              <div className="rounded-xl bg-white dark:bg-gray-800 shadow-lg p-8">
+                <form onSubmit={handleSubmit} className="space-y-8">
+                  {currentStep === 1 && renderPersonalInfo()}
+                  {currentStep === 2 && renderProfessionalDetails()}
+                  {currentStep === 3 && renderDocumentation()}
+                  {currentStep === 4 && renderAvailability()}
 
-              <div className="pt-8 flex justify-between">
-                <Button
-                  type="button"
-                  onClick={handlePrevious}
-                  disabled={currentStep === 1}
-                  className="bg-white dark:bg-gray-700 py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:ring-offset-gray-800 disabled:opacity-50"
-                >
-                  Previous
-                </Button>
-
-                <div className="flex gap-3">
-                  <Button
-                    type="button"
-                    onClick={() => navigate('/dashboard')}
-                    className="bg-white dark:bg-gray-700 py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:ring-offset-gray-800"
-                  >
-                    Cancel
-                  </Button>
-
-                  {currentStep < 4 ? (
+                  <div className="pt-8 flex justify-between">
                     <Button
                       type="button"
-                      onClick={handleNext}
-                      className="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:ring-offset-gray-800"
+                      onClick={handlePrevious}
+                      disabled={currentStep === 1}
+                      className="bg-white dark:bg-gray-700 py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:ring-offset-gray-800 disabled:opacity-50"
                     >
-                      Next
+                      Previous
                     </Button>
-                  ) : currentStep === 4 ? (
-                    <Button
-                      type="submit"
-                      className="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:ring-offset-gray-800"
-                    >
-                      Submit Application
-                    </Button>
-                  ) : (
-                    <Button
-                      type="submit"
-                      className="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:ring-offset-gray-800"
-                    >
-                      {formData.applicationStatus ? 'Check Status Again' : 'Check Application Status'}
-                    </Button>
-                  )}
-                </div>
+
+                    <div className="flex gap-3">
+                      <Button
+                        type="button"
+                        onClick={() => navigate('/dashboard')}
+                        className="bg-white dark:bg-gray-700 py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:ring-offset-gray-800"
+                      >
+                        Cancel
+                      </Button>
+
+                      {currentStep < 4 ? (
+                        <Button
+                          type="button"
+                          onClick={handleNext}
+                          className="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:ring-offset-gray-800"
+                        >
+                          Next
+                        </Button>
+                      ) : (
+                        <Button
+                          type="submit"
+                          className="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:ring-offset-gray-800"
+                        >
+                          Submit Application
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </form>
               </div>
-            </form>
-          </div>
+            </>
+          ) : (
+            <div className="rounded-xl bg-white dark:bg-gray-800 shadow-lg p-8">
+              {renderApplicationStatus()}
+            </div>
+          )}
         </div>
       </main>
     </div>
