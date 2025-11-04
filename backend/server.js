@@ -20,7 +20,8 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: process.env.FRONTEND_URL || ["http://localhost:3000", "http://localhost:3001", "https://fixnow-react.vercel.app"],
+  origin: ["https://fixnow123.netlify.app", "http://localhost:3000", "http://localhost:3001"],
+  methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true
 }));
 app.use(express.json());
@@ -88,7 +89,7 @@ server.on('error', (err) => {
 // Socket.io setup for real-time features
 const io = require('socket.io')(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || "http://localhost:5000",
+    origin: ["https://fixnow123.netlify.app", "http://localhost:3000", "http://localhost:3001"],
     methods: ["GET", "POST"]
   }
 });
