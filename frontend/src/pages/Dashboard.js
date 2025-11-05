@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { Search, Construction, Calendar, CreditCard, Briefcase, MapPin } from 'lucide-react';
 
 const Dashboard = () => {
-  const { user } = useAuth();
+  const { currentUser, isNewUser } = useAuth();
 
   const cards = [
     {
@@ -57,7 +57,7 @@ const Dashboard = () => {
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white tracking-tight">
-              Welcome back, {user?.name?.split(' ')[0] || 'User'}!
+              {isNewUser ? `Welcome ${currentUser?.name || 'User'}!` : `Welcome back ${currentUser?.name || 'User'}!`}
             </h2>
             <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
               What would you like to do today?

@@ -14,14 +14,28 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isNewUser, setIsNewUser] = useState(false);
 
   // Check for token on app load
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      // You could validate the token here with the backend
-      // For now, we'll assume it's valid
-      setCurrentUser({ token });
+      // Fetch user profile to get full user data
+      const fetchUser = async () => {
+        try {
+          const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
+          const response = await axios.get(`${API_BASE_URL}/api/auth/profile`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          setCurrentUser(response.data.user);
+        } catch (error) {
+          console.error('Error fetching user profile:', error);
+          // If token is invalid, remove it
+          localStorage.removeItem('token');
+          setCurrentUser(null);
+        }
+      };
+      fetchUser();
     }
     setLoading(false);
   }, []);
@@ -41,6 +55,7 @@ export const AuthProvider = ({ children }) => {
       // Store token and set user
       localStorage.setItem('token', response.data.token);
       setCurrentUser(response.data.user);
+      setIsNewUser(true); // Mark as new user after signup
 
       return { success: true };
 
@@ -73,6 +88,7 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     localStorage.removeItem('token');
     setCurrentUser(null);
+    setIsNewUser(false);
   };
 
   const getAuthHeaders = () => {
@@ -82,6 +98,7 @@ export const AuthProvider = ({ children }) => {
 
   const value = {
     currentUser,
+    isNewUser,
     signup,
     login,
     logout,

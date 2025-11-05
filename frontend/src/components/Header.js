@@ -62,7 +62,7 @@ const Header = () => {
                     <User size={16} className="text-white" />
                   </div>
                   <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    {currentUser?.fullName?.split(' ')[0] || 'User'}
+                    {currentUser?.name || 'User'}
                   </span>
                   <ChevronDown size={16} className="text-gray-500 dark:text-gray-400" />
                 </button>
@@ -76,7 +76,7 @@ const Header = () => {
                         </div>
                         <div>
                           <p className="font-medium text-gray-900 dark:text-white">
-                            {currentUser?.fullName || 'User'}
+                            {currentUser?.name || 'User'}
                           </p>
                           <p className="text-sm text-gray-500 dark:text-gray-400">
                             {currentUser?.email}
