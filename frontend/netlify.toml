@@ -4,6 +4,7 @@
 
 [build.environment]
   NODE_VERSION = "18"
+  REACT_APP_API_URL = "https://fixnow-1.onrender.com"
 
 [[redirects]]
   from = "/*"
